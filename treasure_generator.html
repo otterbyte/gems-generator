@@ -416,21 +416,14 @@
       if (gemClass === 4 && size + quality ===  2) size = 0;
       
       // Build description — omit Mid-sized and Mid-quality (value === 0)
-      const descriptors = [];
-      if (size !== 0)    descriptors.push(getSizeName(size));
-      if (quality !== 0) descriptors.push(getQualityName(quality));
-      
-      const gemName = getGemType(gemClass);
-      
-      // If there are any descriptors, join them and add the gem name after a space.
-      // If there are none, just use the gem name alone.
-      const description = descriptors.length > 0
-        ? descriptors.join(', ') + ' ' + gemName
-        : gemName;
+      const parts = [];
+      if (size !== 0)    parts.push(getSizeName(size));
+      if (quality !== 0) parts.push(getQualityName(quality));
+      parts.push(getGemType(gemClass));
       
       return {
-        description: description,
-        value: getValue(gemClass, size, quality),
+        description: parts.join(' '),
+        value:       getValue(gemClass, size, quality),
       };
 
       // We're returning an OBJECT with two properties.

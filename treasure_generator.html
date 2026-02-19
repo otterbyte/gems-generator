@@ -414,11 +414,18 @@
 
       if (gemClass === 2 && size + quality === -2) size = 0;
       if (gemClass === 4 && size + quality ===  2) size = 0;
-
+      
+      // Build description — omit Mid-sized and Mid-quality (value === 0)
+      const parts = [];
+      if (size !== 0)    parts.push(getSizeName(size));
+      if (quality !== 0) parts.push(getQualityName(quality));
+      parts.push(getGemType(gemClass));
+      
       return {
-        description: `${getSizeName(size)}, ${getQualityName(quality)} ${getGemType(gemClass)}`,
+        description: parts.join(', '),
         value:       getValue(gemClass, size, quality),
       };
+
       // We're returning an OBJECT with two properties.
       // In Python this would be a dict: {"description": ..., "value": ...}
     }

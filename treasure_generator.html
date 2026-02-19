@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Treasure Generator</title>
+
+  <!--
+    Google Fonts — two fonts that evoke old manuscripts:
+    "Cinzel Decorative" for headings (Roman-inscription feel)
+    "IM Fell English" for body text (aged book feel)
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+
+  <style>
+    /* =====================================================
+       CSS CUSTOM PROPERTIES (Variables)
+       Like constants in VBA — define once, use everywhere.
+       Change --gold here and it updates the whole page.
+    ===================================================== */
+    :root {
+      --parchment:   #f5e9c9;
+      --parchment-dark: #e8d5a3;
+      --ink:         #2c1a0e;
+      --ink-faded:   #5c3d20;
+      --gold:        #b8860b;
+      --gold-bright: #d4a017;
+      --red-wax:     #8b1a1a;
+      --shadow:      rgba(44, 26, 14, 0.4);
+    }
+
+    /* =====================================================
+       RESET & BASE
+       Browsers apply their own default styles — we clear them
+       first so we have full control.
+    ===================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background-color: #1a0f07;
+
+      /* Repeating radial gradient creates a subtle leather/cloth texture */
+      background-image:
+        radial-gradient(ellipse at 20% 20%, #2e1a0a 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, #2e1a0a 0%, transparent 50%),
+        repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 2px,
+          rgba(255,255,255,0.01) 2px,
+          rgba(255,255,255,0.01) 4px
+        );
+
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px 80px;
+      font-family: 'IM Fell English', serif;
+      color: var(--ink);
+    }
+
+    /* =====================================================
+       THE TOME (main container)
+       Position: relative lets us place decorative elements
+       inside it using absolute positioning.
+    ===================================================== */
+    .tome {
+      width: 100%;
+      max-width: 680px;
+      background: var(--parchment);
+
+      /* Multiple box-shadows layer for depth and a worn edge */
+      box-shadow:
+        0 0 0 1px var(--gold),
+        0 0 0 6px #1a0f07,
+        0 0 0 8px var(--gold),
+        0 8px 40px rgba(0,0,0,0.8),
+        inset 0 0 80px rgba(44,26,14,0.15);
+
+      padding: 50px 60px 60px;
+      position: relative;
+
+      /* CSS animation — fades + rises in on page load */
+      animation: pageReveal 0.8s ease-out both;
+    }
+
+    @keyframes pageReveal {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Corner ornaments using ::before / ::after pseudo-elements.
+       These are CSS-generated content — no extra HTML needed. */
+    .tome::before,
+    .tome::after {
+      content: '✦';
+      position: absolute;
+      color: var(--gold);
+      font-size: 1.4rem;
+      opacity: 0.6;
+    }
+    .tome::before { top: 14px;  left: 18px; }
+    .tome::after  { top: 14px; right: 18px; }
+
+    /* =====================================================
+       HEADER
+    ===================================================== */
+    .tome-header {
+      text-align: center;
+      margin-bottom: 36px;
+      border-bottom: 2px solid var(--gold);
+      padding-bottom: 28px;
+      position: relative;
+    }
+
+    .tome-header::after {
+      /* Decorative rule below the border */
+      content: '— ✦ —';
+      position: absolute;
+      bottom: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--parchment);
+      color: var(--gold);
+      padding: 0 12px;
+      font-size: 1rem;
+      letter-spacing: 4px;
+    }
+
+    h1 {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      color: var(--ink);
+      letter-spacing: 2px;
+      line-height: 1.3;
+      text-shadow: 1px 1px 0 var(--parchment-dark);
+    }
+
+    .subtitle {
+      font-style: italic;
+      color: var(--ink-faded);
+      margin-top: 10px;
+      font-size: 0.95rem;
+    }
+
+    /* =====================================================
+       FORM SECTION
+    ===================================================== */
+    .controls {
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+      min-width: 140px;
+    }
+
+    label {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 0.7rem;
+      letter-spacing: 2px;
+      color: var(--ink-faded);
+      text-transform: uppercase;
+    }
+
+    input[type="number"] {
+      background: rgba(44, 26, 14, 0.06);
+      border: 1px solid var(--gold);
+      border-bottom: 2px solid var(--gold);
+      padding: 10px 14px;
+      font-family: 'IM Fell English', serif;
+      font-size: 1.1rem;
+      color: var(--ink);
+      outline: none;
+      width: 100%;
+      transition: background 0.2s;
+    }
+
+    input[type="number"]:focus {
+      background: rgba(184, 134, 11, 0.08);
+    }
+
+    /* Hide the browser's default number spinner arrows */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+    button {
+      background: var(--ink);
+      color: var(--parchment);
+      border: 1px solid var(--gold);
+      padding: 12px 28px;
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, transform 0.1s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    button:hover {
+      background: var(--gold);
+      color: var(--ink);
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    /* =====================================================
+       RESULTS SECTION
+    ===================================================== */
+    #results-section {
+      /* Hidden by default; shown via JavaScript */
+      display: none;
+    }
+
+    .results-header {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 0.75rem;
+      letter-spacing: 3px;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    #gem-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Each gem result is a <li> element added by JavaScript */
+    #gem-list li {
+      background: rgba(44, 26, 14, 0.05);
+      border-left: 3px solid var(--gold);
+      padding: 10px 16px;
+      font-size: 1rem;
+      color: var(--ink);
+      line-height: 1.5;
+
+      /* Each item fades in — the delay is set by JavaScript inline style */
+      opacity: 0;
+      animation: itemReveal 0.4s ease-out forwards;
+    }
+
+    @keyframes itemReveal {
+      from { opacity: 0; transform: translateX(-10px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .gem-value {
+      font-style: italic;
+      color: var(--red-wax);
+      font-weight: bold;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--parchment-dark);
+      margin: 36px 0;
+    }
+
+    /* Error message styling */
+    .error {
+      color: var(--red-wax);
+      font-style: italic;
+      font-size: 0.9rem;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="tome">
+
+    <header class="tome-header">
+      <h1>Treasure<br>Generator</h1>
+      <p class="subtitle">Roll gemstones from the vaults of fortune</p>
+    </header>
+
+    <!-- INPUT FORM -->
+    <!-- In HTML, we use a <form> to group inputs.
+         onsubmit calls our JS function; "return false" prevents
+         the page from reloading (the old default form behaviour). -->
+    <form onsubmit="generateTreasure(); return false;">
+      <div class="controls">
+        <div class="field">
+          <label for="gem-count">Number of Gems</label>
+          <input
+            type="number"
+            id="gem-count"
+            min="1"
+            max="50"
+            value="5"
+            placeholder="1–50"
+          />
+        </div>
+        <button type="submit">Generate</button>
+      </div>
+      <p id="error-msg" class="error" style="display:none;"></p>
+    </form>
+
+    <hr class="divider" id="results-divider" style="display:none;" />
+
+    <!-- RESULTS -->
+    <section id="results-section">
+      <p class="results-header">Treasures Found</p>
+      <ul id="gem-list"></ul>
+    </section>
+
+  </main>
+
+  <!-- =====================================================
+       JAVASCRIPT
+       This is where all the logic lives. It's the same
+       algorithm as our Python, just in JS syntax.
+
+       KEY DIFFERENCES from Python you'll notice:
+         - Variables declared with `const` or `let` instead of `Dim`
+         - `const` = value won't be reassigned (like a VBA Const)
+         - `let`   = value may change (like a regular Dim)
+         - Functions use `function name() {}` or arrow syntax `() => {}`
+         - Arrays use [] — same as Python lists
+         - Objects use {} — same as Python dicts
+         - Math.random() returns 0.0–0.999... (like VBA's Rnd)
+  ===================================================== -->
+  <script>
+
+    // --- DIE ROLL ---
+    // Math.floor() is JS's equivalent of VBA's Int() for positive numbers.
+    // Math.random() gives a float from 0 to <1, same as Rnd.
+    function rollDie(sides) {
+      return Math.floor(Math.random() * sides) + 1;
+    }
+
+    // --- GEM TABLES ---
+    // An object (like a Python dict) keyed by gem class.
+    // Each value is an array (like a Python list).
+    const GEM_TYPES = {
+      1: ["Lapis Lazuli","Garnet","Beryl","Jade","Moss Opal","Moonstone","Freshwater Pearl","Peridot","Sunstone","Tourmaline"],
+      2: ["Opal","Black Pearl","Pink Pearl","White Pearl","Red Spinel","Flame Topaz"],
+      3: ["Black Opal","Yellow Diamond","Lustrous Pearl","Cat's Eye Alexandrite","Lesser Sapphire","Star Blue Spinel","Star Red Spinel","Fire Opal"],
+      4: ["Star Opal","Ruby","Sapphire","Emerald"],
+      5: ["Star Sapphire","Star Ruby","Diamond"],
+    };
+
+    const SIZE_NAMES    = ["Small","Mid-sized","Large"];
+    const QUALITY_NAMES = ["Flawed","Mid-quality","Flawless"];
+
+    // --- GEM CLASS ---
+    function getGemClass() {
+      const roll = rollDie(20);
+      if (roll < 5)  return 1;
+      if (roll < 10) return 2;
+      if (roll < 16) return 3;
+      if (roll < 20) return 4;
+      return 5;
+    }
+
+    // --- GEM TYPE ---
+    function getGemType(gemClass) {
+      const options = GEM_TYPES[gemClass];
+      return options[rollDie(options.length) - 1];
+    }
+
+    // --- SIZE / QUALITY (shared logic) ---
+    function getAttribute(gemClass) {
+      const roll = rollDie(8);
+      let value = roll < 2 ? 1 : roll < 8 ? 0 : -1;
+      // Ternary operator: condition ? valueIfTrue : valueIfFalse
+      // It's a compact one-liner if/else — very common in JS.
+
+      if (gemClass === 1 && value === -1) value = 0;
+      if (gemClass === 5 && value ===  1) value = 0;
+      return value;
+    }
+
+    function getSizeName(size)       { return SIZE_NAMES[size + 1]; }
+    function getQualityName(quality) { return QUALITY_NAMES[quality + 1]; }
+
+    // --- VALUE ---
+    function getValue(gemClass, size, quality) {
+      const total = gemClass + size + quality;
+      if (total < 2)  return "10gp";
+      if (total === 2) return "50gp";
+      if (total === 3) return "100gp";
+      if (total === 4) return "500gp";
+      return "1000gp";
+    }
+
+    // --- GENERATE ONE GEM (returns a description string) ---
+    // Instead of print(), we return a string so the UI can display it.
+    // This separation of logic vs. display is a good habit in any language.
+    function generateGem() {
+      const gemClass = getGemClass();
+      let size    = getAttribute(gemClass);
+      let quality = getAttribute(gemClass);
+
+      if (gemClass === 2 && size + quality === -2) size = 0;
+      if (gemClass === 4 && size + quality ===  2) size = 0;
+
+      return {
+        description: `${getSizeName(size)}, ${getQualityName(quality)} ${getGemType(gemClass)}`,
+        value:       getValue(gemClass, size, quality),
+      };
+      // We're returning an OBJECT with two properties.
+      // In Python this would be a dict: {"description": ..., "value": ...}
+    }
+
+    // --- MAIN FUNCTION (called by the form's onsubmit) ---
+    function generateTreasure() {
+
+      // Get a reference to page elements by their HTML id=""
+      const input    = document.getElementById('gem-count');
+      const errorMsg = document.getElementById('error-msg');
+      const gemList  = document.getElementById('gem-list');
+      const section  = document.getElementById('results-section');
+      const divider  = document.getElementById('results-divider');
+
+      // Validate input
+      const count = parseInt(input.value, 10);
+      if (isNaN(count) || count < 1 || count > 50) {
+        errorMsg.textContent = 'Please enter a number between 1 and 50.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+      errorMsg.style.display = 'none';
+
+      // Clear any previous results
+      // innerHTML = '' wipes all child elements inside the <ul>
+      gemList.innerHTML = '';
+
+      // Show the results section and divider
+      section.style.display = 'block';
+      divider.style.display = 'block';
+
+      // Generate gems and add each one to the list
+      for (let i = 0; i < count; i++) {
+        const gem = generateGem();
+
+        // createElement builds a new HTML element in memory.
+        // It doesn't appear on screen until we appendChild it.
+        const li = document.createElement('li');
+
+        // Template literal (backtick strings) — JS's version of Python f-strings
+        li.innerHTML = `${gem.description} — <span class="gem-value">${gem.value}</span>`;
+
+        // Stagger the animation delay so items cascade in one by one
+        li.style.animationDelay = `${i * 60}ms`;
+
+        gemList.appendChild(li);
+      }
+    }
+
+  </script>
+</body>
+</html>

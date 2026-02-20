@@ -291,7 +291,7 @@
 
     <header class="tome-header">
       <h1>Gems<br>Generator</h1>
-      <p class="subtitle">Roll gemstones from the vaults of fortune</p>
+      <p class="subtitle">Draw gemstones from the vaults of fortune</p>
     </header>
 
     <!-- INPUT FORM -->
@@ -404,6 +404,15 @@
       return "1000gp";
     }
 
+    function getNumericValue(gemClass, size, quality) {
+    const total = gemClass + size + quality;
+    if (total < 2)   return 10;
+    if (total === 2) return 50;
+    if (total === 3) return 100;
+    if (total === 4) return 500;
+    return 1000;
+    }
+
     // --- GENERATE ONE GEM (returns a description string) ---
     // Instead of print(), we return a string so the UI can display it.
     // This separation of logic vs. display is a good habit in any language.
@@ -422,8 +431,9 @@
       parts.push(getGemType(gemClass));
       
       return {
-        description: parts.join(' '),
-        value:       getValue(gemClass, size, quality),
+        description:  parts.join(' '),
+        value:        getValue(gemClass, size, quality),
+        numericValue: getNumericValue(gemClass, size, quality),
       };
 
       // We're returning an OBJECT with two properties.
@@ -458,21 +468,29 @@
       divider.style.display = 'block';
 
       // Generate gems and add each one to the list
-      for (let i = 0; i < count; i++) {
-        const gem = generateGem();
-
-        // createElement builds a new HTML element in memory.
-        // It doesn't appear on screen until we appendChild it.
-        const li = document.createElement('li');
-
-        // Template literal (backtick strings) — JS's version of Python f-strings
-        li.innerHTML = `${gem.description} — <span class="gem-value">${gem.value}</span>`;
-
-        // Stagger the animation delay so items cascade in one by one
-        li.style.animationDelay = `${i * 60}ms`;
-
-        gemList.appendChild(li);
-      }
+        // Collect
+        const gems = [];
+        for (let i = 0; i < count; i++) {
+            gems.push(generateGem());
+        }
+        
+        // Sort highest to lowest
+        gems.sort((a, b) => b.numericValue - a.numericValue);
+        
+        // Sum the total
+        const total = gems.reduce((sum, gem) => sum + gem.numericValue, 0);
+        
+        // Update the header
+        document.querySelector('.results-header').textContent =
+            `Treasures Found: ${count} gem${count !== 1 ? 's' : ''} worth ${total}gp`;
+        
+        // Display
+        gems.forEach((gem, i) => {
+            const li = document.createElement('li');
+            li.innerHTML = `${gem.description} — <span class="gem-value">${gem.value}</span>`;
+            li.style.animationDelay = `${i * 60}ms`;
+            gemList.appendChild(li);
+        });
     }
 
   </script>
